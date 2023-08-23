@@ -1,0 +1,7 @@
+venv/
+project.md
+
+*.pyc
+__pycache__/
+
+instance/

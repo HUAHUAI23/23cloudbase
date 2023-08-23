@@ -5,3 +5,5 @@ project.md
 __pycache__/
 
 instance/
+temp/
+test/

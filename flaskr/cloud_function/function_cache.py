@@ -1,6 +1,9 @@
 from typing import List, Dict, Any, Optional
+
 from pymongo.errors import PyMongoError
-import logging
+from .logger import RuntimeLogger
+from .function import CloudFunction
+
 
 from .db import Db
 from .types import ICloudFunctionData, FunctionContext, FunctionResult
@@ -8,16 +11,21 @@ from .types import ICloudFunctionData, FunctionContext, FunctionResult
 CLOUD_FUNCTION_COLLECTION = "your_collection_name_here"  # 请替换为实际的集合名称
 
 
+function_cache_logger = RuntimeLogger()
+
+
 class FunctionCache:
-    cache: Dict[str, Any] = {}
-    db: Db = Db()
+    cache: Dict[str, CloudFunction] = {}
+    # db: Db = Db()
 
     def get_function_by_id(self, func_id: str) -> Optional[ICloudFunctionData]:
         return self.cache.get(func_id)
 
     @classmethod
     def initialize(cls):
-        logging.info("Listening for changes in cloud function collection...")
+        function_cache_logger.logger.info(
+            "Listening for changes in cloud function collection..."
+        )
         try:
             with cls.db.collection(CLOUD_FUNCTION_COLLECTION).watch() as stream:
                 for change in stream:
@@ -33,8 +41,8 @@ class FunctionCache:
                                 del cls.cache[func_name]
                                 break
         except PyMongoError as e:
-            logging.error(f"Error watching collection: {e}")
+            function_cache_logger.logger.error(f"Error watching collection: {e}")
 
 
 # 初始化 FunctionCache
-FunctionCache.initialize()
+# FunctionCache.initialize()

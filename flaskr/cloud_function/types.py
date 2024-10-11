@@ -1,6 +1,11 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, IO
 from dataclasses import dataclass
 from datetime import datetime
+from logging.handlers import SocketHandler, SysLogHandler
+import logging
+import socket
+import sys
+from enum import Enum
 
 # 类型别名和简单定义
 IncomingHttpHeaders = Dict[str, Any]
@@ -53,9 +58,9 @@ class FunctionContext:
     query: Optional[Any]
     body: Optional[Any]
     params: Optional[Any]
-    auth: Optional[Any]
-    user: Optional[Any]
-    requestId: str
+    # auth: Optional[Any]
+    # user: Optional[Any]
+    # requestId: str
     method: Optional[str]
     socket: Optional[WebSocket]
     request: Optional[Request]
@@ -68,3 +73,49 @@ class FunctionResult:
     data: Optional[Any]
     error: Optional[Error]
     time_usage: int
+
+
+# logger types
+##
+###
+class FileMode(Enum):
+    APPEND = "a"
+    BINARY = "b"
+    WRITE_BINARY = "wb"
+    APPEND_BINARY = "ab"
+
+
+@dataclass
+class LoggerConfig:
+    format_str: str = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    level: int = logging.INFO
+
+    @property
+    def formatter(self) -> logging.Formatter:
+        return logging.Formatter(self.format_str)
+
+
+@dataclass
+class SyslogConfig(LoggerConfig):
+    facility: int = SysLogHandler.LOG_USER  # 默认值为用户级日志
+    socktype: int = socket.SOCK_DGRAM  # 默认值为 UDP socket
+    host: Optional[str] = None
+    port: Optional[int] = None
+
+
+@dataclass
+class StreamConfig(LoggerConfig):
+    stream: IO[str] = sys.stdout
+
+
+@dataclass
+class SocketConfig(LoggerConfig):
+    host: Optional[str] = None
+    port: Optional[int] = None
+
+
+@dataclass
+class FileConfig(LoggerConfig):
+    filename: str = "default_log"
+    mode: FileMode = FileMode.APPEND
+    encoding: str = "utf-8"
